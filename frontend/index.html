@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIRC | AI-Powered Real-Time Security Incident Response System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                            600: '#475569'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-dark-900 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-white">
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-dark-800 border-b border-dark-700 px-6 py-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-cyan-600 p-2.5 rounded-lg text-white shadow-md shadow-cyan-900/50">
+                <i class="fa-solid fa-shield-halved text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                    SIRC <span class="text-xs font-semibold px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Enterprise SOC</span>
+                </h1>
+                <p class="text-xs text-slate-400">AI-Powered Autonomous Security Incident Response & Threat Mitigation</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-4">
+            <!-- Ollama Status Badge -->
+            <div id="ollama-badge" class="hidden sm:flex items-center space-x-2 bg-dark-900 px-3 py-1.5 rounded-full border border-dark-700 text-xs">
+                <span class="relative flex h-2.5 w-2.5">
+                  <span id="ollama-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span id="ollama-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span id="ollama-text" class="text-slate-300 font-medium">Ollama: Connecting...</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <button onclick="triggerSimulation('random')" class="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-md transition-all flex items-center gap-2 active:scale-95">
+                <i class="fa-solid fa-bolt"></i> Simulate Attack
+            </button>
+            <button onclick="triggerSimulation('DDoS')" class="bg-dark-700 hover:bg-dark-600 text-slate-200 px-3 py-2 rounded-lg text-sm font-medium border border-dark-600 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-wave-square"></i> DDoS Flood
+            </button>
+            <button onclick="clearLogs()" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-2 rounded-lg text-sm font-medium transition-all" title="Clear Incidents & Logs">
+                <i class="fa-solid fa-trash-can"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Total Incidents -->
+            <div class="bg-dark-800 border border-dark-700 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Incidents</p>
+                    <h3 id="stat-total" class="text-2xl font-bold text-white mt-1">0</h3>
+                </div>
+                <div class="bg-blue-500/10 text-blue-400 p-3 rounded-lg border border-blue-500/20">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Mitigated -->
+            <div class="bg-dark-800 border border-dark-700 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Mitigated & Blocked</p>
+                    <h3 id="stat-mitigated" class="text-2xl font-bold text-emerald-400 mt-1">0</h3>
+                </div>
+                <div class="bg-emerald-500/10 text-emerald-400 p-3 rounded-lg border border-emerald-500/20">
+                    <i class="fa-solid fa-shield-check text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Active Threats -->
+            <div class="bg-dark-800 border border-dark-700 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Threats</p>
+                    <h3 id="stat-active" class="text-2xl font-bold text-amber-400 mt-1">0</h3>
+                </div>
+                <div class="bg-amber-500/10 text-amber-400 p-3 rounded-lg border border-amber-500/20">
+                    <i class="fa-solid fa-radiation text-lg"></i>
+                </div>
+            </div>
+
+            <!-- API Exchange Rate / Throughput -->
+            <div class="bg-dark-800 border border-dark-700 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">API Throughput (t/s)</p>
+                    <h3 id="stat-tps" class="text-2xl font-bold text-cyan-400 mt-1">0.0</h3>
+                </div>
+                <div class="bg-cyan-500/10 text-cyan-400 p-3 rounded-lg border border-cyan-500/20">
+                    <i class="fa-solid fa-gauge-high text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Total Tokens -->
+            <div class="bg-dark-800 border border-dark-700 p-4 rounded-xl shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Tokens Processed</p>
+                    <h3 id="stat-tokens" class="text-2xl font-bold text-purple-400 mt-1">0</h3>
+                </div>
+                <div class="bg-purple-500/10 text-purple-400 p-3 rounded-lg border border-purple-500/20">
+                    <i class="fa-solid fa-brain text-lg"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incidents Table Section -->
+        <div class="bg-dark-800 border border-dark-700 rounded-xl shadow-lg overflow-hidden flex flex-col">
+            <div class="px-6 py-4 border-b border-dark-700 flex items-center justify-between bg-dark-800/50">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-list-shield text-cyan-400"></i>
+                    <h2 class="font-semibold text-slate-200">Real-Time Security Incidents & Automated Responses</h2>
+                </div>
+                <span class="text-xs text-slate-400 bg-dark-900 px-2.5 py-1 rounded border border-dark-700">Auto-refreshing via Redis & WebSocket</span>
+            </div>
+
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-dark-900/80 text-xs text-slate-400 uppercase sticky top-0 border-b border-dark-700 z-10">
+                        <tr>
+                            <th class="px-6 py-3">Incident ID</th>
+                            <th class="px-6 py-3">Timestamp</th>
+                            <th class="px-6 py-3">Source IP</th>
+                            <th class="px-6 py-3">Attack Type</th>
+                            <th class="px-6 py-3">Severity</th>
+                            <th class="px-6 py-3">AI Playbook Action</th>
+                            <th class="px-6 py-3 text-right">Confidence</th>
+                        </tr>
+                    </thead>
+                    <tbody id="incidents-table-body" class="divide-y divide-dark-700 text-sm">
+                        <!-- Populated dynamically -->
+                        <tr>
+                            <td colspan="7" class="px-6 py-8 text-center text-slate-500">
+                                <i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Waiting for security incidents or simulation...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Real-Time Execution Log Stream (Bottom of Web App) -->
+        <div class="bg-dark-800 border border-dark-700 rounded-xl shadow-lg overflow-hidden flex flex-col">
+            <div class="px-6 py-3 border-b border-dark-700 flex items-center justify-between bg-dark-900/60">
+                <div class="flex items-center space-x-2">
+                    <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <h2 class="font-semibold text-xs uppercase tracking-wider text-slate-300">Live Execution & SIEM Pipeline Log Stream</h2>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="clearConsoleLogs()" class="text-xs text-slate-400 hover:text-white px-2 py-1 rounded bg-dark-700 border border-dark-600 transition-all">Clear Terminal</button>
+                </div>
+            </div>
+            <div id="terminal-logs" class="bg-black/80 p-4 font-mono text-xs text-emerald-400 h-48 overflow-y-auto space-y-1.5 selection:bg-emerald-500 selection:text-black">
+                <div class="text-slate-500">[SYSTEM] Initializing SIRC SIEM daemon & establishing WebSocket telemetry stream...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark-800 border-t border-dark-700 px-6 py-3 text-center text-xs text-slate-500">
+        AI-Powered Real-Time Security Incident Response System (SIRC) &bull; Powered by Ollama & Redis &bull; Enterprise SOC Edition
+    </footer>
+
+    <script src="/app.js"></script>
+</body>
+</html>
